@@ -18,11 +18,12 @@ body { @apply bg-slate-50 text-slate-800 antialiased; }
   .card { @apply rounded-2xl border border-slate-200 bg-white p-6 shadow-sm; }
 }
 
-/* Chart palette: validated categorical slots, fixed order (blue, orange, aqua). */
+/* Chart palette: validated categorical slots, fixed order (blue, orange, aqua, yellow). */
 :root {
   --series-1: #2a78d6;
   --series-2: #eb6834;
   --series-3: #1baf7a;
+  --series-4: #eda100;
   --chart-grid: #e7e5e4;
   --chart-axis: #78716c;
 }

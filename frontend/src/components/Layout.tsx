@@ -3,11 +3,11 @@ import { useAuth } from '../context/AuthContext'
 
 const navItems = [
   { to: '/dashboard', label: 'Dashboard' },
+  { to: '/recommendations', label: 'Recommendations' },
   { to: '/expenses', label: 'Expenses' },
   { to: '/markets', label: 'Markets' },
   { to: '/onboarding', label: 'My Profile' },
   // Coming in later phases:
-  // { to: '/recommendations', label: 'Recommendations' },
   // { to: '/learn', label: 'Learn' },
 ]
 

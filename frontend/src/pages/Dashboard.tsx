@@ -58,15 +58,19 @@ export default function Dashboard() {
         </div>
       )}
 
-      <div className="card">
-        <div className="flex items-center justify-between">
-          <h2 className="font-semibold">Coming next</h2>
-          <Link to="/expenses" className="text-sm font-medium text-brand-700 hover:underline">Track expenses →</Link>
-        </div>
-        <ul className="mt-2 list-inside list-disc text-sm text-slate-600">
-                    <li>Personalised stock, mutual fund and FD recommendations (Phases 3–5)</li>
-          <li>RAG chatbot and learning modules (Phase 6)</li>
-        </ul>
+      <div className="grid gap-4 sm:grid-cols-2">
+        <Link to="/recommendations" className="card block transition hover:border-brand-500">
+          <h2 className="font-semibold">Your investment plan →</h2>
+          <p className="mt-1 text-sm text-slate-600">
+            Asset allocation for a {p.risk_category} investor, a monthly SIP split with fund, stock and FD picks, and a goal planner.
+          </p>
+        </Link>
+        <Link to="/expenses" className="card block transition hover:border-brand-500">
+          <h2 className="font-semibold">Track expenses →</h2>
+          <p className="mt-1 text-sm text-slate-600">
+            Import a bank statement to see where your money goes. Your plan then uses actual savings instead of estimates.
+          </p>
+        </Link>
       </div>
     </div>
   )

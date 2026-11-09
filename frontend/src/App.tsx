@@ -7,6 +7,7 @@ import Onboarding from './pages/Onboarding'
 import Dashboard from './pages/Dashboard'
 import Expenses from './pages/Expenses'
 import Markets from './pages/Markets'
+import Recommendations from './pages/Recommendations'
 
 export default function App() {
   return (
@@ -19,6 +20,7 @@ export default function App() {
             <Route path="/onboarding" element={<Onboarding />} />
             <Route path="/expenses" element={<ProtectedRoute requireProfile><Expenses /></ProtectedRoute>} />
             <Route path="/markets" element={<Markets />} />
+            <Route path="/recommendations" element={<ProtectedRoute requireProfile><Recommendations /></ProtectedRoute>} />
             <Route path="/dashboard" element={<ProtectedRoute requireProfile><Dashboard /></ProtectedRoute>} />
           </Route>
           <Route path="*" element={<Navigate to="/dashboard" replace />} />

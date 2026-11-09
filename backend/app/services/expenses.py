@@ -5,6 +5,7 @@ from datetime import date
 
 from app.models import Transaction
 from app.services.categories import EXPENSE_CATEGORIES, normalize_merchant
+from app.services.planner import sip_future_value
 
 
 def inr(n: float) -> str:
@@ -34,11 +35,6 @@ def _expenses_by_month_cat(txns: list[Transaction]) -> dict[str, dict[str, float
         if t.kind == "expense":
             out[month_key(t.date)][t.category] += t.amount
     return out
-
-
-def sip_future_value(monthly: float, years: int = 10, annual_return: float = 0.12) -> float:
-    r, n = annual_return / 12, years * 12
-    return monthly * (((1 + r) ** n - 1) / r) * (1 + r)
 
 
 def build_summary(txns: list[Transaction], month: str, budgets: dict[str, float], fallback_income: float = 0) -> dict:
@@ -219,7 +215,7 @@ def build_insights(txns: list[Transaction], month: str, budgets: dict[str, float
     if wants:
         top = wants[0]
         cut = top["amount"] * 0.20
-        fv = sip_future_value(cut)
+        fv = sip_future_value(cut, years=10, annual_return=0.12)
         add("top_want", "info", f"Biggest discretionary spend: {top['label']} ({inr(top['amount'])})",
             f"Cutting it by 20% frees {inr(cut)}/month. Invested as a SIP at 12%, that's about {inr(fv)} in 10 years.",
             cut, top["category"])

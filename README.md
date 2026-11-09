@@ -50,17 +50,25 @@ backend/app/
   market_data/ universe.py (NIFTY 50 + curated funds), stocks.py (yfinance), funds.py (mfapi.in),
               fds.py + fd_rates.json (indicative FD rates, edit to update)
   services/metrics.py  CAGR, volatility, Sharpe, Sortino, max drawdown, beta, rolling-return consistency
+  services/   (Phase 4, deterministic recommendation engine)
+              allocation.py     risk score + age + horizon -> equity/debt/FD/liquid, emergency fund, SIP split
+              stock_scoring.py  value / quality / momentum / low-vol percentile scoring, risk filter
+              fund_ranking.py   rank funds within category; sleeve -> allowed fund categories
+              fd_pick.py        best FD for the horizon, senior rate, tax-saver FD
+              planner.py        goal SIP planner and projections
+              recommend.py      ties it all together for /api/recommend
   jobs/       refresh.py (CLI + refresh log), scheduler.py (APScheduler, IST)
   agents/     (Phase 5)
   rag/        (Phase 6)
 frontend/src/
-  pages/      AuthPage, Onboarding (3-step), Dashboard, Expenses
+  pages/      AuthPage, Onboarding (3-step), Dashboard, Expenses, Markets, Recommendations
   components/expenses/  charts, insights, budgets, transaction form, CSV import
+  components/recommend/ allocation, monthly plan, stock picks, FD pick, goal planner
   context/    AuthContext
   lib/api.ts  axios client + shared types
 ```
 
-## API (so far)
+## API
 | Method | Path | Notes |
 |---|---|---|
 | POST | `/api/auth/signup` | returns JWT |
@@ -83,6 +91,11 @@ frontend/src/
 | GET | `/api/market/funds/{code}?range=` | detail + NAV history + benchmark |
 | GET | `/api/market/fds?days=&amount=&senior=&tax_saver=` | banks ranked by rate with maturity value |
 
+| GET | `/api/recommend?tax_regime=new\|old` | full plan: investable surplus, emergency fund, allocation, monthly SIP split with picks, stocks, FD |
+| GET | `/api/recommend/stocks?risk_category=&limit=` | NIFTY 50 scored for a risk category, plus sector-capped picks |
+| GET | `/api/recommend/funds?category=` | funds ranked within their category |
+| GET | `/api/recommend/sip-plan?goal_amount=&years=&annual_return=&current_corpus=&inflation=` | monthly SIP for a goal, vs your surplus |
+
 ### Market data
 - **Stocks:** NIFTY 50 via Yahoo Finance: 5 years of adjusted daily closes plus fundamentals. Refreshed Mon–Fri at 16:30 IST.
 - **Mutual funds:** about 30 Direct-Growth funds across Index, Large, Flexi, Mid, Small, ELSS, Hybrid, Debt and Liquid, from AMFI NAVs via mfapi.in. Refreshed daily at 23:30 IST.
@@ -98,13 +111,24 @@ frontend/src/
 - **Spikes:** this month's category total > mean + 2σ of the previous 6 months, and > 25% above the mean.
 - **Compounding nudge:** what a 20% cut in the top discretionary category grows to as a 10-year SIP at 12%.
 
+### Recommendation logic (Phase 4)
+All rule-based and deterministic: the same profile and data always give the same plan, and every number traces back to a rule.
+- **Investable surplus:** average actual savings (income minus non-investment spending) over the last 3 complete months with transactions; otherwise profile income minus expenses.
+- **Emergency fund first:** 6 months of expenses in a liquid fund. If the gap is at most 3 months of surplus, all of the surplus goes there; otherwise half does, so investing still starts. If the fund takes everything for now, the page shows the plan that starts once it's full.
+- **Asset allocation:** equity starts at `10% + 8% × (risk score − 1)`, then is capped by age (`110 − age`) and horizon (0% under 3 years, 30% under 5, 55% under 7). Liquid is 5% (10% for horizons under 3 years). The rest is split between FDs and debt funds, with more in FDs for lower risk scores. Each cap that applies is listed under "Why this mix".
+- **Sleeves:** equity is spread by risk category (conservative: index/large + balanced advantage; moderate: + flexi + mid; aggressive: + small). Users who already invest get 10–20% in direct stocks. With the old tax regime, ELSS takes up to ₹12,500/month (the 80C limit). Sleeves under the ₹500 SIP minimum are merged.
+- **Stock scoring:** percentile within NIFTY 50 for value (P/E, P/B), quality (ROE, D/E, margin), momentum (6M, 1Y return) and low volatility (vol, beta), with weights by risk category. Loss-makers get the worst value score. A risk filter applies (conservative: vol ≤ 25% and beta ≤ 1.0; moderate: vol ≤ 35% and beta ≤ 1.3), and picks are capped at 2 per sector.
+- **Fund ranking:** within the AMFI category by Sharpe 3Y (25%), Sortino, 3Y and 5Y CAGR, rolling 1Y consistency and max drawdown (15% each). Missing metrics count as neutral and are flagged. Index funds are placed by what they track (Nifty 50 is core; Midcap 150 is mid).
+- **FD pick:** best rate for the horizon (1–5 years), senior rate at 60+, the best large bank shown alongside a small finance bank (DICGC ₹5 lakh), and the tax-saver FD under the old regime.
+- **Goal planner:** monthly SIP = (goal × (1 + inflation)^years − corpus growth) / SIP factor, paid monthly in advance. The default return is the expected return of the allocation for *that goal's* horizon.
+
 Try it with [`data/sample_statement.csv`](data/sample_statement.csv) (6 months of sample data) via **Import CSV**.
 
 ## Roadmap
 - [x] **Phase 1** Foundation: auth, financial profile, risk scoring
 - [x] **Phase 2** Expense tracker + savings insights
 - [x] **Phase 3** Market data layer (yfinance, mfapi.in, FD rates)
-- [ ] **Phase 4** Recommendation algorithms (allocation, stock scoring, MF ranking, FD pick, SIP planner)
+- [x] **Phase 4** Recommendation algorithms (allocation, stock scoring, MF ranking, FD pick, SIP planner)
 - [ ] **Phase 5** AI agents (LangGraph) on top of the algorithms
 - [ ] **Phase 6** RAG chatbot + learning modules
 - [ ] **Phase 7** Polish, Docker, deploy

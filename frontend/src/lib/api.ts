@@ -165,3 +165,57 @@ export const mcap = (n: number | null | undefined) => {
   return cr >= 1e5 ? `₹${(cr / 1e5).toFixed(2)}L Cr` : `₹${Math.round(cr).toLocaleString('en-IN')} Cr`
 }
 export const shortName = (name: string) => name.replace(/\s+(Limited|Ltd\.?)$/i, '')
+
+// ---- Phase 4: recommendations ----
+export type Asset = 'equity' | 'debt' | 'fd' | 'liquid'
+export interface FundPick {
+  scheme_code: number; name: string; short_name: string; fund_house: string | null; category: string
+  metrics: Record<string, number | null>; score: number; peers: number; rank_in_category: number
+  reasons: string[]; cautions: string[]
+}
+export interface FdPickQuote {
+  bank: string; bank_type: string; rate: number; tenure_days: number; tax_saver: boolean
+  maturity_value: number; interest: number; source_url: string | null
+}
+export interface StockScore {
+  symbol: string; name: string; sector: string | null; price: number | null; market_cap: number | null
+  metrics: Record<string, number | null>; score: number
+  factors: { value: number; quality: number; momentum: number; low_vol: number }
+  eligible: boolean; reasons: string[]; cautions: string[]
+}
+export interface PlanItem {
+  sleeve: string; label: string; asset: Asset; monthly: number; lumpsum: number; share: number
+  picks: (FundPick | FdPickQuote | { symbol: string; name: string; score: number })[]
+}
+export interface Recommendation {
+  profile: { age: number; risk_score: number; risk_category: Profile['risk_category']; horizon_years: number; experience: number; goals: string[] }
+  investable: {
+    monthly: number; source: 'profile' | 'expenses'; months_used: string[]; actual_average?: number
+    profile_surplus: number; to_invest: number; lumpsum: number
+  }
+  emergency: {
+    ok: boolean; target: number; current: number; shortfall: number; monthly_contribution: number
+    months_to_fill: number | null; picks: FundPick[]
+  }
+  allocation: {
+    weights: Record<Asset, number>; equity_mix: Record<string, number>; rationale: string[]
+    expected_return: number; assumed_returns: Record<Asset, number>
+  }
+  plan: PlanItem[]
+  plan_starts: 'now' | 'after_emergency'
+  notes: string[]
+  stocks: { picks: StockScore[]; eligible: number; universe: number; weights: Record<string, number> }
+  fd: {
+    tenure_days: number; senior: boolean; amount: number; best: FdPickQuote | null; safest: FdPickQuote | null
+    alternatives: FdPickQuote[]; tax_saver: FdPickQuote | null; as_of: string | null; notes: string[]
+  } | null
+  tax_regime: 'new' | 'old'
+  data: { stocks: number; funds: number; fds: number }
+  disclaimer: string
+}
+export interface GoalPlan {
+  goal_amount: number; years: number; annual_return: number; inflation: number; target_amount: number
+  current_corpus: number; corpus_future_value: number; monthly_sip: number; total_invested: number
+  projected_value: number; gains: number; projection: { year: number; invested: number; value: number }[]
+  assumptions: string[]; monthly_budget?: number; affordable?: boolean; months_at_budget?: number | null
+}

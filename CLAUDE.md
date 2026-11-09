@@ -24,16 +24,9 @@ First-time setup is in README.md. `.env` isn't committed: copy `.env.example` an
       recurring-payment and spike detection, savings insights (`services/expenses.py`).
 - [x] **Phase 3:** market data: 50 NIFTY stocks, about 29 Direct-Growth funds and FD rates. Metrics are in `services/metrics.py`
       (CAGR, volatility, Sharpe, Sortino, max drawdown, beta, rolling consistency). Daily APScheduler refresh. Markets page.
-- [ ] **Phase 4 (next):** recommendation algorithms. Use deterministic code, not an LLM:
-  - Asset allocation: risk score + horizon + age give an equity / debt / FD / liquid split. Emergency fund first if
-    `snapshot.emergency_fund_ok` is false.
-  - Stock scoring: weighted factors (value: P/E, P/B; quality: ROE, debt-to-equity, margins; momentum: 6M/1Y return;
-    low volatility / beta), normalised as percentiles within the universe. Filter by risk category.
-  - Fund ranking within category: Sharpe/Sortino, 3Y/5Y CAGR, rolling-return consistency, drawdown. Map risk category
-    to allowed fund categories.
-  - FD pick: best rate for the user's horizon; tax-saver FD if 80C is relevant; senior rate if age ≥ 60.
-  - SIP / goal planner: the monthly SIP needed to reach a goal amount in N years at an expected return.
-  - `/api/recommend` endpoint plus a Recommendations page. Investable amount = monthly surplus from profile/expenses.
+- [x] **Phase 4:** recommendation engine, deterministic and with no LLM: `services/allocation.py` (allocation, emergency fund,
+      SIP split into sleeves), `stock_scoring.py`, `fund_ranking.py`, `fd_pick.py`, `planner.py`, all wired up in `recommend.py`.
+      `/api/recommend` (+ `/stocks`, `/funds`, `/sip-plan`), Recommendations page. Logic is documented in the README.
 - [ ] **Phase 5:** LangGraph agents that explain and combine the Phase 4 outputs. Agents must call tools for every number
       and never invent figures. The keyword auto-categoriser in `services/categories.py` can get an LLM fallback.
 - [ ] **Phase 6:** RAG chatbot (ChromaDB, citations, tools for live prices and the user's own data) and learning modules with videos.
