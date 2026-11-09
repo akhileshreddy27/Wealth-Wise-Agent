@@ -1,0 +1,28 @@
+@import "tailwindcss";
+
+@theme {
+  --color-brand-50: #ecfdf5;
+  --color-brand-100: #d1fae5;
+  --color-brand-500: #10b981;
+  --color-brand-600: #059669;
+  --color-brand-700: #047857;
+}
+
+body { @apply bg-slate-50 text-slate-800 antialiased; }
+
+@layer components {
+  .input { @apply w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-100; }
+  .label { @apply mb-1 block text-sm font-medium text-slate-700; }
+  .btn-primary { @apply inline-flex items-center justify-center rounded-lg px-4 py-2 text-sm font-semibold transition disabled:opacity-50 bg-brand-600 text-white hover:bg-brand-700; }
+  .btn-ghost { @apply inline-flex items-center justify-center rounded-lg px-4 py-2 text-sm font-semibold transition disabled:opacity-50 text-slate-600 hover:bg-slate-100; }
+  .card { @apply rounded-2xl border border-slate-200 bg-white p-6 shadow-sm; }
+}
+
+/* Chart palette: validated categorical slots, fixed order (blue, orange, aqua). */
+:root {
+  --series-1: #2a78d6;
+  --series-2: #eb6834;
+  --series-3: #1baf7a;
+  --chart-grid: #e7e5e4;
+  --chart-axis: #78716c;
+}

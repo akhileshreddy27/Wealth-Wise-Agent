@@ -1,0 +1,16 @@
+{
+  "_note": "INDICATIVE sample rates (% p.a.) for development. Banks change FD rates often: verify on each bank's site and update `as_of`. Slabs (days): 7-45, 46-179, 180-364, 365-729, 730-1094, 1095-1824, 1825-3650.",
+  "as_of": "2025-10-01",
+  "slabs": [[7, 45], [46, 179], [180, 364], [365, 729], [730, 1094], [1095, 1824], [1825, 3650]],
+  "banks": [
+    {"bank": "State Bank of India", "type": "public", "url": "https://sbi.co.in", "rates": [3.05, 5.05, 5.80, 6.25, 6.45, 6.30, 6.05], "senior_bonus": 0.50, "tax_saver_rate": 6.05},
+    {"bank": "Bank of Baroda", "type": "public", "url": "https://www.bankofbaroda.in", "rates": [3.50, 5.25, 5.90, 6.25, 6.50, 6.25, 6.10], "senior_bonus": 0.50, "tax_saver_rate": 6.10},
+    {"bank": "Punjab National Bank", "type": "public", "url": "https://www.pnbindia.in", "rates": [3.50, 5.00, 5.90, 6.25, 6.40, 6.30, 6.10], "senior_bonus": 0.50, "tax_saver_rate": 6.10},
+    {"bank": "HDFC Bank", "type": "private", "url": "https://www.hdfcbank.com", "rates": [3.00, 4.75, 5.75, 6.25, 6.45, 6.45, 6.15], "senior_bonus": 0.50, "tax_saver_rate": 6.15},
+    {"bank": "ICICI Bank", "type": "private", "url": "https://www.icicibank.com", "rates": [3.00, 4.75, 5.75, 6.25, 6.45, 6.60, 6.40], "senior_bonus": 0.50, "tax_saver_rate": 6.40},
+    {"bank": "Axis Bank", "type": "private", "url": "https://www.axisbank.com", "rates": [3.00, 4.75, 5.75, 6.25, 6.45, 6.45, 6.40], "senior_bonus": 0.50, "tax_saver_rate": 6.40},
+    {"bank": "Kotak Mahindra Bank", "type": "private", "url": "https://www.kotak.com", "rates": [2.75, 5.00, 6.00, 6.25, 6.40, 6.25, 6.25], "senior_bonus": 0.50, "tax_saver_rate": 6.25},
+    {"bank": "AU Small Finance Bank", "type": "small_finance", "url": "https://www.aubank.in", "rates": [3.50, 5.50, 6.50, 6.75, 7.00, 7.25, 7.00], "senior_bonus": 0.50, "tax_saver_rate": 7.00},
+    {"bank": "Post Office Time Deposit", "type": "government", "url": "https://www.indiapost.gov.in", "slabs": [[365, 729], [730, 1094], [1095, 1824], [1825, 1825]], "rates": [6.90, 7.00, 7.10, 7.50], "senior_bonus": 0.0, "tax_saver_rate": 7.50}
+  ]
+}
