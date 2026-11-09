@@ -41,6 +41,7 @@ class ImportResult(BaseModel):
     imported: int
     skipped: int
     errors: list[str]
+    ai_categorized: int = 0   # rows the keyword rules couldn't place that the AI categorised
 
 
 class BudgetIn(BaseModel):

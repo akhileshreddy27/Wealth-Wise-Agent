@@ -7,6 +7,8 @@ Accepted headers (case-insensitive, first match wins):
   or debit/credit columns: debit / withdrawal, credit / deposit
   type:        type, kind  (expense|income|debit|credit|dr|cr)  optional
   category:    category    optional (auto-categorised when missing/invalid)
+
+Each row carries `auto_category` (True when the category was guessed) so the caller can refine guesses.
 """
 import csv
 import io
@@ -95,11 +97,13 @@ def parse_csv(content: bytes) -> tuple[list[dict], list[str]]:
 
             valid = EXPENSE_CATEGORIES if kind == "expense" else INCOME_CATEGORIES
             cat = (row.get(col["category"]) or "").strip().lower() if col["category"] else ""
-            if cat not in valid:
+            auto = cat not in valid
+            if auto:
                 cat = categorize(note, kind)
 
             rows.append({"kind": kind, "amount": round(amt, 2), "category": cat,
-                         "date": _parse_date(row[col["date"]]), "note": note, "payment_mode": "other"})
+                         "date": _parse_date(row[col["date"]]), "note": note, "payment_mode": "other",
+                         "auto_category": auto})
         except (ValueError, TypeError, KeyError) as e:
             errors.append(f"Line {i}: {e}")
     return rows, errors

@@ -219,3 +219,11 @@ export interface GoalPlan {
   projected_value: number; gains: number; projection: { year: number; invested: number; value: number }[]
   assumptions: string[]; monthly_budget?: number; affordable?: boolean; months_at_budget?: number | null
 }
+
+// ---- Phase 5: AI agents ----
+export interface AgentStatus { enabled: boolean; provider: string; model: string | null; reason: string | null }
+export interface PlanExplanation { source: 'ai' | 'rules'; text: string; unverified: string[]; reason?: string }
+export interface ChatTurn { role: 'user' | 'assistant'; content: string }
+export interface ChatReply {
+  reply: string; tool_calls: { name: string; args: Record<string, unknown> }[]; grounded: boolean; unverified: string[]
+}

@@ -8,6 +8,7 @@ import Dashboard from './pages/Dashboard'
 import Expenses from './pages/Expenses'
 import Markets from './pages/Markets'
 import Recommendations from './pages/Recommendations'
+import Assistant from './pages/Assistant'
 
 export default function App() {
   return (
@@ -21,6 +22,7 @@ export default function App() {
             <Route path="/expenses" element={<ProtectedRoute requireProfile><Expenses /></ProtectedRoute>} />
             <Route path="/markets" element={<Markets />} />
             <Route path="/recommendations" element={<ProtectedRoute requireProfile><Recommendations /></ProtectedRoute>} />
+            <Route path="/assistant" element={<ProtectedRoute requireProfile><Assistant /></ProtectedRoute>} />
             <Route path="/dashboard" element={<ProtectedRoute requireProfile><Dashboard /></ProtectedRoute>} />
           </Route>
           <Route path="*" element={<Navigate to="/dashboard" replace />} />

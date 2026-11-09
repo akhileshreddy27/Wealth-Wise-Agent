@@ -14,6 +14,7 @@ export default function CsvImport({ onImported }: { onImported: () => void }) {
       const { data } = await api.post('/transactions/import', fd)
       const parts = [`Imported ${data.imported}`]
       if (data.skipped) parts.push(`${data.skipped} duplicates skipped`)
+      if (data.ai_categorized) parts.push(`${data.ai_categorized} categorised by AI`)
       if (data.errors.length) parts.push(`${data.errors.length} rows had errors (${data.errors[0]})`)
       setMsg({ ok: data.errors.length === 0, text: parts.join(' · ') })
       onImported()

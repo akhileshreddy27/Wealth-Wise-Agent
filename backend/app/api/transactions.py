@@ -4,6 +4,7 @@ from fastapi import APIRouter, Depends, File, HTTPException, Query, UploadFile, 
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from app.agents.categorizer import ai_categorize
 from app.api.deps import get_current_user
 from app.db import get_db
 from app.models import Transaction, User
@@ -59,10 +60,18 @@ def list_transactions(
     return db.scalars(q.order_by(Transaction.date.desc(), Transaction.id.desc())).all()
 
 
+def guess_category(note: str, kind: str) -> str:
+    """Keyword rules first; the AI only sees descriptions the rules can't place."""
+    cat = categorize(note, kind)
+    if cat in ("other", "other_income") and note.strip():
+        cat = ai_categorize([(note, kind)]).get(0, cat)
+    return cat
+
+
 @router.post("", response_model=TransactionOut, status_code=status.HTTP_201_CREATED)
 def create_transaction(body: TransactionIn, user: User = Depends(get_current_user), db: Session = Depends(get_db)):
     data = body.model_dump()
-    data["category"] = data["category"] or categorize(body.note, body.kind)
+    data["category"] = data["category"] or guess_category(body.note, body.kind)
     txn = Transaction(user_id=user.id, **data)
     db.add(txn)
     db.commit()
@@ -74,7 +83,7 @@ def create_transaction(body: TransactionIn, user: User = Depends(get_current_use
 def update_transaction(txn_id: int, body: TransactionIn, user: User = Depends(get_current_user), db: Session = Depends(get_db)):
     txn = _owned(db, user, txn_id)
     data = body.model_dump()
-    data["category"] = data["category"] or categorize(body.note, body.kind)
+    data["category"] = data["category"] or guess_category(body.note, body.kind)
     for k, v in data.items():
         setattr(txn, k, v)
     db.commit()
@@ -97,6 +106,16 @@ async def import_csv(file: UploadFile = File(...), user: User = Depends(get_curr
     if len(rows) > MAX_IMPORT_ROWS:
         raise HTTPException(status.HTTP_422_UNPROCESSABLE_ENTITY, f"At most {MAX_IMPORT_ROWS} rows per import")
 
+    # One batched AI call for the descriptions the keyword rules filed under "other".
+    unsure = [r for r in rows if r.pop("auto_category") and r["category"] in ("other", "other_income") and r["note"]]
+    notes = list(dict.fromkeys((r["note"], r["kind"]) for r in unsure))
+    guesses = {notes[i]: cat for i, cat in ai_categorize(notes).items()}
+    ai_categorized = 0
+    for r in unsure:
+        if (r["note"], r["kind"]) in guesses:
+            r["category"] = guesses[(r["note"], r["kind"])]
+            ai_categorized += 1
+
     # Skip exact duplicates (same date, amount, kind, note) so re-uploading a statement is safe.
     existing = {
         (t.date, round(t.amount, 2), t.kind, t.note)
@@ -112,4 +131,4 @@ async def import_csv(file: UploadFile = File(...), user: User = Depends(get_curr
         db.add(Transaction(user_id=user.id, **r))
         imported += 1
     db.commit()
-    return ImportResult(imported=imported, skipped=skipped, errors=errors[:50])
+    return ImportResult(imported=imported, skipped=skipped, errors=errors[:50], ai_categorized=ai_categorized)

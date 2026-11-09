@@ -5,7 +5,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app import models  # noqa: F401  (registers tables)
-from app.api import auth, expenses, market, profile, recommend, transactions
+from app.api import agent, auth, expenses, market, profile, recommend, transactions
 from app.core.config import settings
 from app.db import Base, SessionLocal, engine
 from app.jobs.refresh import ensure_seeded
@@ -29,7 +29,7 @@ async def lifespan(_: FastAPI):
         sched.shutdown(wait=False)
 
 
-app = FastAPI(title="Wealth Wise Agent API", version="0.4.0", lifespan=lifespan)
+app = FastAPI(title="Wealth Wise Agent API", version="0.5.0", lifespan=lifespan)
 
 app.add_middleware(
     CORSMiddleware,
@@ -45,6 +45,7 @@ app.include_router(transactions.router, prefix="/api")
 app.include_router(expenses.router, prefix="/api")
 app.include_router(market.router, prefix="/api")
 app.include_router(recommend.router, prefix="/api")
+app.include_router(agent.router, prefix="/api")
 
 
 @app.get("/api/health")

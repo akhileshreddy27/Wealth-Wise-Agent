@@ -6,6 +6,7 @@ import PlanTable from '../components/recommend/PlanTable'
 import StockPicks from '../components/recommend/StockPicks'
 import FdCard from '../components/recommend/FdCard'
 import GoalPlanner from '../components/recommend/GoalPlanner'
+import ExplainCard from '../components/recommend/ExplainCard'
 
 const REGIME_KEY = 'ww_tax_regime'
 
@@ -104,6 +105,7 @@ export default function Recommendations() {
           <code className="rounded bg-slate-100 px-1.5 py-0.5">python -m app.jobs.refresh all</code> in <code>backend/</code>.
         </div>
       )}
+      <ExplainCard key={regime} regime={regime} />
       <AllocationCard rec={rec} />
       <PlanTable rec={rec} />
       <FdCard rec={rec} />

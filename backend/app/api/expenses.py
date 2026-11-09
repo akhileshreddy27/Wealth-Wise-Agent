@@ -16,7 +16,7 @@ router = APIRouter(tags=["expenses"])
 MONTH = Query(None, pattern=r"^\d{4}-\d{2}$", description="YYYY-MM, defaults to the current month")
 
 
-def _load(db: Session, user: User, month: str):
+def load_expense_data(db: Session, user: User, month: str):
     start, _ = month_range(shift_month(month, -6))
     _, end = month_range(month)
     txns = list(db.scalars(select(Transaction).where(
@@ -29,14 +29,14 @@ def _load(db: Session, user: User, month: str):
 @router.get("/expenses/summary")
 def summary(month: str | None = MONTH, user: User = Depends(get_current_user), db: Session = Depends(get_db)):
     month = month or month_key(date.today())
-    txns, budgets, income = _load(db, user, month)
+    txns, budgets, income = load_expense_data(db, user, month)
     return build_summary(txns, month, budgets, income)
 
 
 @router.get("/expenses/insights")
 def insights(month: str | None = MONTH, user: User = Depends(get_current_user), db: Session = Depends(get_db)):
     month = month or month_key(date.today())
-    txns, budgets, income = _load(db, user, month)
+    txns, budgets, income = load_expense_data(db, user, month)
     return build_insights(txns, month, budgets, income)
 
 

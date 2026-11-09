@@ -13,3 +13,7 @@ yfinance==1.8.0
 pandas==3.1.1
 numpy==2.4.6
 apscheduler==3.10.4
+# Phase 5: AI agents (any OpenAI-compatible provider: Groq, Ollama, OpenRouter, Gemini)
+langgraph==1.2.20
+langchain-core==1.7.6
+langchain-openai==1.7.4

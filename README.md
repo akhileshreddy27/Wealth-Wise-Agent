@@ -7,6 +7,7 @@ a RAG chatbot with learning modules, and an expense tracker.
 
 ## Stack
 - **Backend:** FastAPI, SQLAlchemy 2, SQLite (swap to Postgres via `DATABASE_URL`), JWT auth
+- **AI:** LangGraph + any OpenAI-compatible LLM (Groq free tier by default)
 - **Frontend:** React 19 + Vite + TypeScript + Tailwind v4, React Router
 
 ## Run locally
@@ -15,7 +16,7 @@ a RAG chatbot with learning modules, and an expense tracker.
 # backend (http://localhost:8000, docs at /docs)
 cd backend
 python3 -m venv .venv && .venv/bin/pip install -r requirements.txt
-cp .env.example .env          # then set JWT_SECRET
+cp .env.example .env          # then set JWT_SECRET, and GROQ_API_KEY for the AI features (optional)
 .venv/bin/uvicorn app.main:app --reload --port 8000
 ```
 
@@ -58,12 +59,19 @@ backend/app/
               planner.py        goal SIP planner and projections
               recommend.py      ties it all together for /api/recommend
   jobs/       refresh.py (CLI + refresh log), scheduler.py (APScheduler, IST)
-  agents/     (Phase 5)
+  agents/     (Phase 5, LangGraph)
+              llm.py         provider config: Groq (free tier), Ollama, OpenRouter, Gemini; all OpenAI-compatible
+              tools.py       tools the agents call for every figure (plan, stocks, funds, FDs, goals, expenses)
+              advisor.py     tool-calling agent graph with a number-verification step
+              guard.py       checks every number in an AI answer against tool outputs
+              explainer.py   "Explain my plan" with a rule-based fallback
+              categorizer.py batched AI fallback for transactions the keyword rules can't place
   rag/        (Phase 6)
 frontend/src/
   pages/      AuthPage, Onboarding (3-step), Dashboard, Expenses, Markets, Recommendations
   components/expenses/  charts, insights, budgets, transaction form, CSV import
-  components/recommend/ allocation, monthly plan, stock picks, FD pick, goal planner
+  components/recommend/ allocation, monthly plan, stock picks, FD pick, goal planner, AI explanation
+  pages/Assistant.tsx   chat with the advisor agent
   context/    AuthContext
   lib/api.ts  axios client + shared types
 ```
@@ -96,6 +104,10 @@ frontend/src/
 | GET | `/api/recommend/funds?category=` | funds ranked within their category |
 | GET | `/api/recommend/sip-plan?goal_amount=&years=&annual_return=&current_corpus=&inflation=` | monthly SIP for a goal, vs your surplus |
 
+| GET | `/api/agent/status` | whether AI is configured (provider, model) |
+| GET | `/api/agent/explain-plan?tax_regime=` | plain-language plan explanation (`source`: ai or rules) |
+| POST | `/api/agent/chat` | `{messages: [{role, content}]}` → reply, tools used, `grounded`, `unverified` |
+
 ### Market data
 - **Stocks:** NIFTY 50 via Yahoo Finance: 5 years of adjusted daily closes plus fundamentals. Refreshed Mon–Fri at 16:30 IST.
 - **Mutual funds:** about 30 Direct-Growth funds across Index, Large, Flexi, Mid, Small, ELSS, Hybrid, Debt and Liquid, from AMFI NAVs via mfapi.in. Refreshed daily at 23:30 IST.
@@ -122,6 +134,14 @@ All rule-based and deterministic: the same profile and data always give the same
 - **FD pick:** best rate for the horizon (1–5 years), senior rate at 60+, the best large bank shown alongside a small finance bank (DICGC ₹5 lakh), and the tax-saver FD under the old regime.
 - **Goal planner:** monthly SIP = (goal × (1 + inflation)^years − corpus growth) / SIP factor, paid monthly in advance. The default return is the expected return of the allocation for *that goal's* horizon.
 
+### AI layer (Phase 5)
+The AI explains; it never calculates. Every number comes from the deterministic code above.
+- **Provider:** set `LLM_PROVIDER` and a key in `backend/.env`. The default is **Groq** (free tier, `llama-3.3-70b-versatile`; get a key at console.groq.com/keys). `ollama` runs fully locally with no key; `openrouter` and `gemini` also work. Without a key, everything still works: the explanation falls back to a rule-based summary and the Assistant page shows setup steps.
+- **Advisor agent (LangGraph):** `agent → tools → agent … → verify`. The agent has 8 tools wrapping Phase 2–4 code: profile, full plan, stock scores, stock lookup, fund rankings, FD options, goal SIP and expense summary. Tool outputs are kept compact to fit free-tier token limits.
+- **Number guard:** after the agent answers, every figure in the reply (₹ amounts, %, lakh/crore/k, ratios) must match a tool result, the user's own message, or a known rule (80C ₹1.5 lakh, DICGC ₹5 lakh, 50/30/20…), allowing for rounding and % vs fraction. If any doesn't, the agent is told which figures failed and gets one retry. Anything still unverified is returned in `unverified` and flagged in the UI. For "Explain my plan", a failed check falls back to the rule-based summary.
+- **Categoriser fallback:** keyword rules run first. Only descriptions they file under "other" go to the model, in one batched call per CSV import, and replies are validated against the category list.
+- **Tests** use a scripted fake model (`tests/fakes.py`), so they run offline. `tests/conftest.py` forces `LLM_PROVIDER=none` so a real key in `.env` is never used.
+
 Try it with [`data/sample_statement.csv`](data/sample_statement.csv) (6 months of sample data) via **Import CSV**.
 
 ## Roadmap
@@ -129,6 +149,6 @@ Try it with [`data/sample_statement.csv`](data/sample_statement.csv) (6 months o
 - [x] **Phase 2** Expense tracker + savings insights
 - [x] **Phase 3** Market data layer (yfinance, mfapi.in, FD rates)
 - [x] **Phase 4** Recommendation algorithms (allocation, stock scoring, MF ranking, FD pick, SIP planner)
-- [ ] **Phase 5** AI agents (LangGraph) on top of the algorithms
+- [x] **Phase 5** AI agents (LangGraph) on top of the algorithms
 - [ ] **Phase 6** RAG chatbot + learning modules
 - [ ] **Phase 7** Polish, Docker, deploy

@@ -128,7 +128,7 @@ def test_csv_parse_formats():
 def test_csv_import_dedupes(h):
     csv = b"date,note,amount\n2026-11-01,Swiggy,300\n2026-11-02,Blinkit,800\n"
     r = client.post("/api/transactions/import", files={"file": ("s.csv", csv, "text/csv")}, headers=h).json()
-    assert r == {"imported": 2, "skipped": 0, "errors": []}
+    assert r == {"imported": 2, "skipped": 0, "errors": [], "ai_categorized": 0}
     r = client.post("/api/transactions/import", files={"file": ("s.csv", csv, "text/csv")}, headers=h).json()
     assert r["imported"] == 0 and r["skipped"] == 2
 

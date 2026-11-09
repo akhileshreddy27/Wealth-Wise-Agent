@@ -7,6 +7,8 @@ educational, not SEBI-registered advice, and that disclaimer stays visible.
 ## Stack
 - **Backend:** FastAPI, SQLAlchemy 2 and SQLite (`backend/wealthwise.db`; Postgres via `DATABASE_URL`), JWT auth, pytest.
 - **Frontend:** React 19, Vite, TypeScript, Tailwind v4, React Router and Recharts. Dev server on :5173, proxying `/api` to :8000.
+- **AI:** LangGraph + langchain-openai against any OpenAI-compatible endpoint (Groq default). Keep tool outputs compact
+  (free-tier TPM limits). Tests use `tests/fakes.py::ScriptedChatModel`; `tests/conftest.py` sets `LLM_PROVIDER=none`.
 - **Market data:** yfinance (NSE, `.NS` suffix) and mfapi.in (AMFI NAVs). FD rates come from `backend/app/market_data/fd_rates.json`.
 
 ## Run
@@ -27,8 +29,9 @@ First-time setup is in README.md. `.env` isn't committed: copy `.env.example` an
 - [x] **Phase 4:** recommendation engine, deterministic and with no LLM: `services/allocation.py` (allocation, emergency fund,
       SIP split into sleeves), `stock_scoring.py`, `fund_ranking.py`, `fd_pick.py`, `planner.py`, all wired up in `recommend.py`.
       `/api/recommend` (+ `/stocks`, `/funds`, `/sip-plan`), Recommendations page. Logic is documented in the README.
-- [ ] **Phase 5:** LangGraph agents that explain and combine the Phase 4 outputs. Agents must call tools for every number
-      and never invent figures. The keyword auto-categoriser in `services/categories.py` can get an LLM fallback.
+- [x] **Phase 5:** AI layer in `app/agents/`. Groq by default (`GROQ_API_KEY`, free tier); Ollama, OpenRouter and Gemini
+      via `LLM_PROVIDER`. LangGraph advisor with 8 tools plus a number guard (`guard.py`) that rejects figures not found in
+      tool output. "Explain my plan" and the AI categoriser fall back to rules when AI is off. `/api/agent/*`, Assistant page.
 - [ ] **Phase 6:** RAG chatbot (ChromaDB, citations, tools for live prices and the user's own data) and learning modules with videos.
 - [ ] **Phase 7:** Docker Compose, deploy (Vercel + Render/Railway + Neon/Supabase), README screenshots, demo video.
 
@@ -43,4 +46,6 @@ First-time setup is in README.md. `.env` isn't committed: copy `.env.example` an
 - Schema changes: tables are created with `create_all`, so a new column on an existing table needs the DB deleted and data
   reloaded, or Alembic, which isn't set up yet. Consider adding Alembic before Phase 4 changes existing tables.
 - Charts use the fixed palette `--series-1/2/3` in `index.css`, one y-axis, with gains/losses shown by ▲/▼ as well as colour.
+- Never let the LLM produce numbers itself: add a tool instead. Anything new the agent may quote must appear in a tool
+  result, or the guard will flag it (`KNOWN_FACTS` in `guard.py` holds general rules like the 80C limit).
 - Demo data: import `data/sample_statement.csv` (6 months) on the Expenses page.
